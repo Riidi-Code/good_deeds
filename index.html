@@ -195,6 +195,33 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
 .toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(10px);background:#1F2937;color:#fff;padding:10px 22px;border-radius:24px;font-size:13.5px;font-weight:600;z-index:400;opacity:0;transition:opacity .25s,transform .25s;white-space:nowrap;pointer-events:none}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ── REFLECTION ── */
+.ref-btn{flex:1;border:2px solid var(--border);background:var(--cream);border-radius:12px;padding:12px 8px;cursor:pointer;font-size:22px;line-height:1.4;transition:all .15s;font-family:inherit}
+.ref-btn:active{border-color:var(--teal);background:#E8F5F2;transform:scale(.96)}
+/* ── ACHIEVEMENTS ── */
+.badge-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:9px;margin-bottom:14px}
+.badge-item{background:var(--surface);border-radius:12px;padding:12px 8px;text-align:center;box-shadow:var(--shadow)}
+.badge-item .bi{font-size:28px;display:block;margin-bottom:4px}
+.badge-item .bl{font-size:11px;font-weight:700;color:var(--text)}
+.badge-item.locked{opacity:.35;filter:grayscale(1)}
+/* ── LEADERBOARD ── */
+.lb-row{display:flex;align-items:center;gap:10px;padding:11px 14px;border-bottom:1px solid var(--border)}
+.lb-row:last-child{border-bottom:none}
+.lb-rank{font-size:16px;width:24px;text-align:center;flex-shrink:0}
+.lb-name{font-size:14px;font-weight:700;flex:1}
+.lb-xp{font-size:12px;font-weight:700;color:var(--teal);background:#E8F5F2;padding:3px 8px;border-radius:10px}
+.lb-you{background:#FFF8E6}
+/* ── STATS ── */
+.stat-row{margin-bottom:10px}
+.stat-lbl{display:flex;justify-content:space-between;font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px}
+.stat-bar-bg{background:#E8E0D4;border-radius:4px;height:8px}
+.stat-bar-fill{background:linear-gradient(90deg,var(--teal),var(--green));height:8px;border-radius:4px;transition:width .5s}
+/* ── REMINDERS ── */
+.rem-row{display:flex;align-items:center;gap:10px;padding:10px 0;border-bottom:1px solid var(--border)}
+.rem-row:last-child{border-bottom:none}
+.rem-lbl{font-size:13px;font-weight:600;flex:1;color:var(--text)}
+.rem-sel{border:2px solid var(--border);background:var(--cream);border-radius:8px;padding:5px 8px;font-size:12px;font-family:inherit;outline:none;color:var(--text)}
+.rem-sel:focus{border-color:var(--teal)}
 @media(min-width:431px){body{border-left:1px solid var(--border);border-right:1px solid var(--border)}}
 </style>
 </head>
@@ -287,6 +314,8 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
       <div class="sbox"><div class="sn" id="s-total">0</div><div class="sl">Deeds Done</div></div>
       <div class="sbox"><div class="sn" id="s-pray">0</div><div class="sl">Prayers</div></div>
     </div>
+    <div class="sec-lbl" style="cursor:pointer;user-select:none" onclick="toggleLB()">🏆 Friends Leaderboard <span id="lb-arr">▾</span></div>
+    <div class="hist-card" id="lb-section" style="margin-bottom:14px"></div>
     <div class="player-card">
       <div class="pc-frame">
         <div class="pc-avatar-wrap">
@@ -305,6 +334,10 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
         </div>
       </div>
     </div>
+    <div class="sec-lbl">📊 By Category</div>
+    <div class="hist-card" id="cat-stats" style="padding:14px 16px;margin-bottom:14px"></div>
+    <div class="sec-lbl">🎖️ Achievements</div>
+    <div class="badge-grid" id="achievements"></div>
     <div class="sec-lbl">Completed Deeds</div>
     <div class="hist-card" id="deed-hist"><div class="hr"><span class="ht" style="color:var(--muted)">No deeds yet — head to Today!</span></div></div>
     <div class="sec-lbl">Completed Jobs</div>
@@ -383,6 +416,22 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
       <div class="ps-sub">Rate which deeds feel right for you. "Not for me" hides them.</div>
       <div id="pref-list"></div>
     </div>
+    <div class="ps">
+      <h3>🔔 Reminders</h3>
+      <div class="ps-sub">Get nudged to do your daily good deed.</div>
+      <div class="rem-row">
+        <span class="rem-lbl">Frequency</span>
+        <select class="rem-sel" id="rem-freq">
+          <option value="off">Off</option>
+          <option value="daily">Daily</option>
+          <option value="3x">3× per week</option>
+        </select>
+      </div>
+      <div class="rem-row">
+        <span class="rem-lbl">Preferred time</span>
+        <input type="time" class="rem-sel" id="rem-time" value="08:00">
+      </div>
+    </div>
     <button class="btn-save-prof" onclick="saveProfile()">Save Profile</button>
     <div style="height:8px"></div>
   </div>
@@ -445,6 +494,21 @@ input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:24px;heigh
     <div class="lu-level" id="lu-level">Helper</div>
     <p id="lu-msg">You're making a real difference in the world. Keep going!</p>
     <button class="btn-lu-close" onclick="closeLevelUp()">Keep Doing Good!</button>
+  </div>
+</div>
+
+<!-- ── REFLECTION MODAL ── -->
+<div class="lu-overlay" id="ref-overlay">
+  <div class="lu-card" onclick="event.stopPropagation()">
+    <div style="font-size:36px;margin-bottom:6px">💭</div>
+    <h2 style="margin-bottom:8px">How did that feel?</h2>
+    <p>A moment of reflection makes kindness more meaningful.</p>
+    <div style="display:flex;gap:8px;margin:16px 0">
+      <button class="ref-btn" onclick="saveReflection('great')">😊<br><small>Great</small></button>
+      <button class="ref-btn" onclick="saveReflection('okay')">🙂<br><small>Okay</small></button>
+      <button class="ref-btn" onclick="saveReflection('hard')">😔<br><small>Hard</small></button>
+    </div>
+    <button class="btn-lu-close" onclick="closeReflection()">Skip</button>
   </div>
 </div>
 
@@ -527,12 +591,30 @@ const LEVELS=[
 ];
 function getLevel(xp){return LEVELS.find(l=>xp>=l.min&&xp<=l.max)||LEVELS[0];}
 
+const FRIENDS=[
+  {name:'Sarah K.',emoji:'🌺',xp:840,streak:7},
+  {name:'Marcus T.',emoji:'⚡',xp:620,streak:4},
+  {name:'Priya S.',emoji:'🌙',xp:1250,streak:12},
+  {name:'David O.',emoji:'🦁',xp:380,streak:2},
+  {name:'Emma L.',emoji:'🎀',xp:950,streak:9},
+];
+const BADGES=[
+  {id:'first',icon:'✨',label:'First Step',check:s=>s.completedIds.length>=1},
+  {id:'streak3',icon:'🔥',label:'On Fire',check:s=>s.streak>=3},
+  {id:'streak7',icon:'💪',label:'Week Warrior',check:s=>s.streak>=7},
+  {id:'deeds10',icon:'🌟',label:'Dedicated',check:s=>s.completedIds.length>=10},
+  {id:'grower',icon:'🌳',label:'Grower',check:s=>s.xp>=300},
+  {id:'sharer',icon:'📢',label:'Sharer',check:s=>(s.sharedCount||0)>=1},
+];
+
 // ─── STATE ──────────────────────────────────────────────
 const DS={
   personality:5,religion:'none',categories:['kindness','community','environment','family'],
   completedIds:[],customDeeds:[],ownDeeds:[],ratings:{},
   streak:0,lastDate:null,totalPrayers:0,xp:0,todayDeedId:null,
   claimedJobs:[],completedJobs:[],claimedMicro:[],completedMicro:[],customJobs:[],
+  reflections:{},earnedBadges:[],sharedCount:0,
+  reminders:{enabled:false,freq:'off',time:'08:00'},
 };
 let S={...DS};
 let currentShareText='';
@@ -547,8 +629,8 @@ function awardXP(amount){
   const prev=getLevel(S.xp);
   S.xp+=amount;
   const next=getLevel(S.xp);
-  save();
-  updateHdrXP();
+  save();updateHdrXP();
+  checkBadges();
   if(next.name!==prev.name) setTimeout(()=>showLevelUp(next),600);
 }
 
@@ -655,6 +737,7 @@ function markTodayDone(){
   awardXP(d.xp||25);
   renderToday();
   toast(`Amazing! +${d.xp||25} XP earned 🌟`);
+  setTimeout(()=>openReflection(d.id),1400);
 }
 
 function shuffleDeed(){
@@ -714,6 +797,7 @@ function closeShare(){
 }
 
 function shareVia(platform){
+  S.sharedCount=(S.sharedCount||0)+1;save();checkBadges();
   const txt=encodeURIComponent(currentShareText);
   const url=encodeURIComponent('https://gooddeeds.app');
   let link='';
@@ -746,8 +830,10 @@ function renderProgress(){
   const lvl=getLevel(S.xp);
   const nxt=LEVELS[LEVELS.indexOf(lvl)+1];
   const pct=nxt?Math.min(100,Math.round(((S.xp-lvl.min)/(nxt.min-lvl.min))*100)):100;
-  document.getElementById('lvl-name').textContent=`${lvl.emoji} ${lvl.name}`;
-  document.getElementById('lvl-xp-txt').textContent=`${S.xp} XP`;
+  document.getElementById('pc-emoji').textContent=lvl.emoji;
+  document.getElementById('pc-lvbadge').textContent=`LV ${LEVELS.indexOf(lvl)+1}`;
+  document.getElementById('pc-lvname').textContent=lvl.name;
+  document.getElementById('pc-xp-big').textContent=S.xp;
   document.getElementById('lvl-bar').style.width=pct+'%';
   document.getElementById('lvl-hint').textContent=nxt?`${nxt.min-S.xp} XP to ${nxt.emoji} ${nxt.name}`:'Maximum level — you\'re a Hero! 🏆';
   const dm=Object.fromEntries(allDeeds().map(d=>[d.id,d]));
@@ -759,6 +845,9 @@ function renderProgress(){
   jh.innerHTML=S.completedJobs.length?S.completedJobs.map(j=>`
     <div class="hr"><span class="hi">💼</span><div style="flex:1"><div class="ht">${j.title}</div><div class="hs">${j.company} · 💶 €${j.pay} earned</div></div></div>`).join('')
     :'<div class="hr"><span class="ht" style="color:var(--muted)">No jobs yet!</span></div>';
+  renderLeaderboard();
+  renderStats();
+  renderAchievements();
 }
 
 function resetProgress(){
@@ -845,6 +934,9 @@ function renderProfile(){
     const r=S.ratings[d.id];
     return `<div class="pref-row"><span class="pref-icon">${d.icon||'✨'}</span><span class="pref-title">${d.title}</span><div class="pref-btns"><button class="pref-btn ${r==='good'?'pg':''}" onclick="rateDeed(${JSON.stringify(d.id)},'good')">👍</button><button class="pref-btn ${r==='nope'?'pn':''}" onclick="rateDeed(${JSON.stringify(d.id)},'nope')">👎</button></div></div>`;
   }).join('');
+  const rem=S.reminders||{};
+  document.getElementById('rem-freq').value=rem.enabled?(rem.freq||'daily'):'off';
+  document.getElementById('rem-time').value=rem.time||'08:00';
 }
 function updSlider(v){v=parseInt(v);const L=['','Strong Introvert','Strong Introvert','Introvert','Introvert','Balanced','Balanced','Extrovert','Extrovert','Strong Extrovert','Strong Extrovert'];document.getElementById('p-sl-val').textContent=`${L[v]} (${v}/10)`;}
 function pickRel(id){S.religion=id;document.querySelectorAll('.rel-btn').forEach((b,i)=>b.classList.toggle('sel',RELIGIONS[i].id===id));}
@@ -852,7 +944,67 @@ function toggleCat(id){S.categories=S.categories.includes(id)?S.categories.filte
 function rateDeed(id,val){S.ratings[id]=val;renderProfile();toast(val==='good'?'Marked as a good deed ✅':'Hidden from suggestions.');}
 function saveProfile(){
   S.personality=parseInt(document.getElementById('p-slider').value);
+  const remFreq=document.getElementById('rem-freq').value;
+  S.reminders={enabled:remFreq!=='off',freq:remFreq,time:document.getElementById('rem-time').value};
   S.todayDeedId=null;save();renderToday();toast('Profile saved! ✓');
+}
+
+// ─── REFLECTION ─────────────────────────────────────────
+let reflDeedId=null;
+function openReflection(id){reflDeedId=id;document.getElementById('ref-overlay').classList.add('show');}
+function closeReflection(){document.getElementById('ref-overlay').classList.remove('show');reflDeedId=null;}
+function saveReflection(feeling){
+  if(reflDeedId)S.reflections[reflDeedId]=feeling;
+  save();closeReflection();
+  const msgs={great:'Wonderful! Kindness from the heart. 💛',okay:'Every deed matters, big or small. 🌱',hard:'Growth comes from challenge. You did it! 💪'};
+  toast(msgs[feeling]);
+}
+
+// ─── BADGES ─────────────────────────────────────────────
+function checkBadges(){
+  BADGES.forEach(b=>{
+    if(!S.earnedBadges.includes(b.id)&&b.check(S)){
+      S.earnedBadges.push(b.id);save();
+      setTimeout(()=>toast(`🎖️ Badge unlocked: ${b.label}!`),700);
+    }
+  });
+}
+
+// ─── LEADERBOARD ────────────────────────────────────────
+let lbOpen=true;
+function toggleLB(){lbOpen=!lbOpen;document.getElementById('lb-section').style.display=lbOpen?'':'none';document.getElementById('lb-arr').textContent=lbOpen?'▾':'▸';}
+function renderLeaderboard(){
+  const you={name:'You',emoji:'⭐',xp:S.xp,streak:S.streak,you:true};
+  const all=[...FRIENDS,you].sort((a,b)=>b.xp-a.xp);
+  document.getElementById('lb-section').innerHTML=all.map((f,i)=>`
+    <div class="lb-row${f.you?' lb-you':''}">
+      <span class="lb-rank">${i===0?'🥇':i===1?'🥈':i===2?'🥉':i+1}</span>
+      <span style="font-size:20px">${f.emoji}</span>
+      <span class="lb-name">${f.name}${f.you?' (You)':''}</span>
+      <span class="lb-xp">${f.xp} XP</span>
+      ${f.streak?`<span style="font-size:11px;color:var(--orange)">🔥${f.streak}</span>`:''}
+    </div>`).join('');
+}
+
+// ─── CATEGORY STATS ─────────────────────────────────────
+function renderStats(){
+  const counts=Object.fromEntries(CATEGORIES.map(c=>[c.id,0]));
+  S.completedIds.forEach(id=>{const d=allDeeds().find(x=>x.id==id);if(d)counts[d.cat]=(counts[d.cat]||0)+1;});
+  const max=Math.max(1,...Object.values(counts));
+  document.getElementById('cat-stats').innerHTML=CATEGORIES.map(c=>`
+    <div class="stat-row">
+      <div class="stat-lbl"><span>${c.label}</span><span>${counts[c.id]}</span></div>
+      <div class="stat-bar-bg"><div class="stat-bar-fill" style="width:${Math.round((counts[c.id]/max)*100)}%"></div></div>
+    </div>`).join('');
+}
+
+// ─── ACHIEVEMENTS ────────────────────────────────────────
+function renderAchievements(){
+  document.getElementById('achievements').innerHTML=BADGES.map(b=>`
+    <div class="badge-item${S.earnedBadges.includes(b.id)?'':' locked'}">
+      <span class="bi">${b.icon}</span>
+      <span class="bl">${b.label}</span>
+    </div>`).join('');
 }
 
 // ─── TOAST ──────────────────────────────────────────────
